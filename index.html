@@ -1,3 +1,639 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>ESP Relay Dashboard</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+<script type="module">
+
+import { initializeApp } 
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+
+import { 
+getDatabase,
+ref,
+set,
+onValue
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+
+
+//==============================
+// FIREBASE CONFIG
+//==============================
+
+const firebaseConfig = {
+
+apiKey: "AIzaSyCi4t6mVlW3FNCAatvSnBV_NxCUHppdJS8",
+
+authDomain: "relaycontrol-a3842.firebaseapp.com",
+
+databaseURL:
+"https://relaycontrol-a3842-default-rtdb.asia-southeast1.firebasedatabase.app",
+
+projectId:"relaycontrol-a3842",
+
+storageBucket:
+"relaycontrol-a3842.firebasestorage.app",
+
+messagingSenderId:"430022645479",
+
+appId:
+"1:430022645479:web:d52c09fe50e49b7636b442",
+
+measurementId:"G-LL7W6604F0"
+
+};
+
+
+
+const app = initializeApp(firebaseConfig);
+
+const db = getDatabase(app);
+
+
+console.log("Firebase Connected");
+
+
+
+//==============================
+// CONTROL RELAY
+//==============================
+
+
+window.relayControl=function(relay,value){
+
+
+console.log(
+"Set",
+relay,
+value
+);
+
+
+set(
+ref(db,relay+"/state"),
+value
+)
+
+.then(()=>{
+
+console.log("OK");
+
+})
+
+.catch((err)=>{
+
+console.log(err);
+
+});
+
+
+}
+
+
+
+//==============================
+// TIMER ENABLE
+//==============================
+
+
+window.timerControl=function(relay){
+
+
+let status =
+document.getElementById(relay+"timer").checked;
+
+
+set(
+ref(db,relay+"/timerEnable"),
+status
+);
+
+
+}
+
+
+
+//==============================
+// SAVE TIMER
+//==============================
+
+
+window.saveTimer=function(relay){
+
+
+let onTime =
+Number(
+document.getElementById(relay+"on").value
+);
+
+
+let offTime =
+Number(
+document.getElementById(relay+"off").value
+);
+
+
+
+set(
+ref(db,relay+"/onTime"),
+onTime
+);
+
+
+set(
+ref(db,relay+"/offTime"),
+offTime
+);
+
+
+alert("Timer Saved");
+
+
+}
+
+
+
+//==============================
+// MONITOR RELAY
+//==============================
+
+
+function monitorRelay(relay){
+
+
+onValue(
+ref(db,relay),
+(snapshot)=>{
+
+
+let d=snapshot.val();
+
+
+console.log(relay,d);
+
+
+
+if(!d)
+return;
+
+
+
+// STATUS
+
+let status =
+document.getElementById(relay+"status");
+
+
+let state =
+document.getElementById(relay+"state");
+
+
+
+if(d.state==1){
+
+
+status.innerHTML="ON";
+
+status.className="on";
+
+
+state.innerHTML="1";
+
+
+}
+else{
+
+
+status.innerHTML="OFF";
+
+status.className="off";
+
+
+state.innerHTML="0";
+
+
+}
+
+
+
+
+// TIMER
+
+document.getElementById(relay+"timer")
+.checked =
+d.timerEnable || false;
+
+
+
+// TIME
+
+document.getElementById(relay+"on")
+.value =
+d.onTime || 0;
+
+
+document.getElementById(relay+"off")
+.value =
+d.offTime || 0;
+
+
+
+});
+
+
+}
+
+
+
+monitorRelay("relay1");
+
+monitorRelay("relay2");
+
+
+
+
+
+//==============================
+// DEVICE MONITOR
+//==============================
+
+
+onValue(
+ref(db,"device"),
+(snapshot)=>{
+
+
+let d=snapshot.val();
+
+
+console.log("device",d);
+
+
+if(!d)
+return;
+
+
+
+document.getElementById("online")
+.innerHTML =
+d.online ?
+"ONLINE":
+"OFFLINE";
+document.getElementById("status").innerHTML =
+d.status || "-";
+
+document.getElementById("lastError").innerHTML =
+d.lastError || "NONE";
+
+if(d.status=="ONLINE")
+{
+    document.getElementById("status").style.color="#00ff55";
+}
+else if(d.status=="RESTARTING")
+{
+    document.getElementById("status").style.color="#ff9800";
+}
+else
+{
+    document.getElementById("status").style.color="#ff4444";
+}
+
+document.getElementById("ip")
+.innerHTML =
+d.ip || "-";
+
+
+document.getElementById("rssi")
+.innerHTML =
+(d.rssi || 0)+" dBm";
+
+
+document.getElementById("heap")
+.innerHTML =
+(d.heap || 0)+" byte";
+
+
+document.getElementById("uptime")
+.innerHTML =
+(d.uptime || 0)+" sec";
+
+
+
+});
+
+
+
+</script>
+
+
+
+<style>
+
+
+body{
+
+font-family:Arial;
+
+background:#101010;
+
+color:white;
+
+text-align:center;
+
+}
+
+
+h1{
+
+color:#00e5ff;
+
+}
+
+
+
+.card{
+
+background:#222;
+
+padding:20px;
+
+margin:15px auto;
+
+border-radius:15px;
+
+max-width:420px;
+
+box-shadow:0 0 10px #000;
+
+}
+
+
+
+button{
+
+padding:12px 25px;
+
+margin:5px;
+
+border:0;
+
+border-radius:10px;
+
+font-size:18px;
+
+cursor:pointer;
+
+}
+
+
+
+.onbtn{
+
+background:#00c853;
+
+color:white;
+
+}
+
+
+.offbtn{
+
+background:#d50000;
+
+color:white;
+
+}
+
+
+
+.on{
+
+color:#00ff55;
+
+font-size:30px;
+
+font-weight:bold;
+
+}
+
+
+.off{
+
+color:#ff1744;
+
+font-size:30px;
+
+font-weight:bold;
+
+}
+
+
+
+input{
+
+width:80px;
+
+padding:8px;
+
+font-size:18px;
+
+text-align:center;
+
+}
+
+
+
+.device{
+
+text-align:left;
+
+line-height:35px;
+
+}
+
+
+
+</style>
+
+
+</head>
+
+
+<body>
+
+
+
+<h1>
+ESP RELAY CONTROL
+</h1>
+
+
+
+
+<div class="card">
+
+
+<h2>Relay 1</h2>
+
+
+<div id="relay1status"
+class="off">
+
+OFF
+
+</div>
+
+
+State :
+<span id="relay1state">
+0
+</span>
+
+
+<br><br>
+
+
+<button class="onbtn"
+onclick="relayControl('relay1',1)">
+ON
+</button>
+
+
+<button class="offbtn"
+onclick="relayControl('relay1',0)">
+OFF
+</button>
+
+
+<br><br>
+
+
+
+<input type="checkbox"
+id="relay1timer"
+onchange="timerControl('relay1')">
+
+Timer Enable
+
+
+<br><br>
+
+
+ON :
+
+<input id="relay1on"
+type="number">
+
+
+OFF :
+
+<input id="relay1off"
+type="number">
+
+
+<br><br>
+
+
+<button onclick="saveTimer('relay1')">
+
+SAVE TIMER
+
+</button>
+
+
+
+</div>
+
+
+
+
+
+
+<div class="card">
+
+
+<h2>Relay 2</h2>
+
+
+<div id="relay2status"
+class="off">
+
+OFF
+
+</div>
+
+
+State :
+<span id="relay2state">
+0
+</span>
+
+
+<br><br>
+
+
+<button class="onbtn"
+onclick="relayControl('relay2',1)">
+ON
+</button>
+
+
+<button class="offbtn"
+onclick="relayControl('relay2',0)">
+OFF
+</button>
+
+
+
+<br><br>
+
+
+<input type="checkbox"
+id="relay2timer"
+onchange="timerControl('relay2')">
+
+
+Timer Enable
+
+
+<br><br>
+
+
+ON :
+
+<input id="relay2on"
+type="number">
+
+
+OFF :
+
+<input id="relay2off"
+type="number">
+
+
+<br><br>
+
+
+<button onclick="saveTimer('relay2')">
+
+SAVE TIMER
+
+</button>
+
+
+</div>
+
+
+
+
+
 <div class="card device">
 
 <h2>DEVICE</h2>
@@ -36,3 +672,9 @@ Uptime :
 <span id="uptime">-</span>
 
 </div>
+
+
+
+</body>
+
+</html>
