@@ -59,7 +59,14 @@ const db = getDatabase(app);
 
 console.log("Firebase Connected");
 
+set(ref(db,"relay1/state"),0);
+set(ref(db,"relay2/state"),0);
 
+set(ref(db,"relay1/status"),"OFF");
+set(ref(db,"relay2/status"),"OFF");
+
+set(ref(db,"relay1/timerEnable"),false);
+set(ref(db,"relay2/timerEnable"),false);
 
 //==============================
 // CONTROL RELAY
